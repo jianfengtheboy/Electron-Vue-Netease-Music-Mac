@@ -1,8 +1,17 @@
 'use strict'
 
 import { app, protocol, BrowserWindow, Tray, ipcMain, shell, session, } from 'electron'
+import path from 'path'
+import pkg from './../../package.json'
+import initIpcEvent from './modules/ipcEvent'
+import createTray from './modules/tray'
+import createTrayWindow from './windows/trayWindow'
+import createLyricWindow from './windows/desktopLyricWindow'
+import createMiniWindow from './windows/miniWindow'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
+import { ACHEME, LOAD_URL } from './config'
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
+
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
 if (process.env.NODE_ENV === "production") {
@@ -48,7 +57,13 @@ const setThumbarButtons = function (mainWindow, playing) {
 let mainWindow = null
 
 protocol.registerSchemesAsPrivileged([
-  { scheme: 'app', privileges: { secure: true, standard: true } }
+  {
+    scheme: 'app',
+    privileges: {
+      secure: true,
+      standard: true
+    }
+  }
 ])
 
 async function createWindow() {
@@ -65,8 +80,8 @@ async function createWindow() {
     webPreferences: {
       webSecurity: false,
       nodeIntegration: true,
-      nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
-      contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION
+      enableRemoteModule: true,
+      contextIsolation: false
     }
   })
 
@@ -88,6 +103,27 @@ async function createWindow() {
     createProtocol(ACHEME)
     await mainWindow.loadURL(LOAD_URL)
   }
+
+  mainWindow.on('close', (event) => {
+    event.preventDefault()
+    mainWindow.webContents.send('will-close')
+  })
+  
+  mainWindow.on('closed', () => {
+    mainWindow = null
+  })
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show()
+    // 设置任务栏操作和缩略图
+    if (process.platform === 'win32') {
+      setThumbarButtons(mainWindow, false)
+      mainWindow.setThumbnailClip({ x: 0, y: 0, width: 180, height: 50 })
+    }
+  })
+
+  // 初始化进程之间事件监听
+  initIpcEvent()
 }
 
 app.on('window-all-closed', () => {
@@ -97,18 +133,48 @@ app.on('window-all-closed', () => {
 })
 
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  if (global.mainWindow === null || mainWindow === null) {
+    createWindow()
+  }
 })
 
 app.on('ready', async () => {
   if (isDevelopment && !process.env.IS_TEST) {
-    try {
-      await installExtension(VUEJS_DEVTOOLS)
-    } catch (e) {
-      console.error('Vue Devtools failed to install:', e.toString())
-    }
+    // try {
+    //   const extensions = await session.defaultSession.getAllExtensions()
+    //   if (!extensions.includes("Vue.js devtools")) {
+    //     const appData = app.getPath("appData")
+    //     const res = await session.defaultSession.loadExtension(
+    //       // 根据本机实际情况修改
+    //       path.resolve(appData, 'Google/Chrome/Default/Extensions/nhdogjmejiglipccpnnnanhbledajbpd/5.3.4_0')
+    //     )
+    //     console.log(`${res.name}安装成功`)
+    //   }
+    // } catch (e) {
+    //   console.error('Vue Devtools failed to install:', e.toString())
+    // }
   }
-  createWindow()
+  global.execPath = process.execPath
+  global.argv = process.argv
+  await createWindow()
+  global.lyricWindow = createLyricWindow(BrowserWindow)
+  global.miniWindow = createMiniWindow(BrowserWindow)
+  global.wins = {}
+  global.wins['lyricWindow'] = global.lyricWindow
+  global.wins['miniWindow'] = global.miniWindow
+  ipcMain.on('thumbar-buttons', (e, data) => {
+    if (global.mainWindow === null || mainWindow === null) return
+    if (process.platform === 'win32') {
+      let { playing } = data
+      setThumbarButtons(mainWindow, playing)
+    }
+  })
+})
+
+app.on('quit', () => {
+  if (global.downloadFile) {
+    shell.openItem(global.downloadFile)
+  }
 })
 
 if (isDevelopment) {
