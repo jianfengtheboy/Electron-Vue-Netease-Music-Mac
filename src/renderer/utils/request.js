@@ -3,13 +3,13 @@
  * @LastEditors: Sun
  * @Email: jianfengtheboy@163.com
  * @Date: 2021-07-05 23:33:20
- * @LastEditTime: 2021-07-06 22:46:10
+ * @LastEditTime: 2021-07-07 14:10:19
  * @Description: axios封装
  */
 import requestFn from './requestVender/index'
 import store from '../store'
 import Message from 'ant-design-vue/es/message'
-import Toast from '../baseComponents/toast/toast.vue'
+import Toast from '../baseComponents/toast/toast.js'
 
 const baseURL = process.env.NODE_ENV === 'development' ? 'http://139.9.230.159:3000' : 'http://139.9.230.159:3000'
 

@@ -14,6 +14,8 @@ import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
+let forceQuit = false
+
 if (process.env.NODE_ENV === "production") {
   global.__img = path.join(__dirname, "./img");
   global.__images = path.join(__dirname, "./images");
@@ -68,8 +70,8 @@ protocol.registerSchemesAsPrivileged([
 
 async function createWindow() {
   global.mainWindow = mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 900,
+    width: 1000,
+    height: 670,
     title: process.platform === 'win32' ? '网易云音乐' : '',
     icon: previewIcon,
     titleBarStyle: 'hiddenInset',
@@ -105,8 +107,18 @@ async function createWindow() {
   }
 
   mainWindow.on('close', (event) => {
-    event.preventDefault()
+    if (!forceQuit) {
+      event.preventDefault()
+      mainWindow.hide()
+    }
     mainWindow.webContents.send('will-close')
+  })
+
+  app.on('before-quit', function (event) {
+    if(!forceQuit){
+      event.preventDefault()
+      mainWindow.hide()
+    }
   })
   
   mainWindow.on('closed', () => {
@@ -135,6 +147,8 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   if (global.mainWindow === null || mainWindow === null) {
     createWindow()
+  } else {
+    mainWindow.show()
   }
 })
 

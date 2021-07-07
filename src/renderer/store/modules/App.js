@@ -3,7 +3,7 @@
  * @LastEditors: Sun
  * @Email: jianfengtheboy@163.com
  * @Date: 2021-07-06 13:45:27
- * @LastEditTime: 2021-07-06 13:59:35
+ * @LastEditTime: 2021-07-07 14:25:58
  */
 import ls from 'store'
 
@@ -44,7 +44,7 @@ const actions = {
 }
 
 export default {
-  namespace: true,
+  namespaced: true,
   state,
   mutations,
   actions
