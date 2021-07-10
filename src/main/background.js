@@ -77,7 +77,7 @@ async function createWindow() {
     titleBarStyle: 'hiddenInset',
     frame: process.platform !== 'win32',
     show: true,
-    backgroundColor: '#2e2c29',
+    backgroundColor: '#ffffff',
     hasShadow: process.platform !== 'darwin',
     webPreferences: {
       webSecurity: false,
@@ -153,21 +153,6 @@ app.on('activate', () => {
 })
 
 app.on('ready', async () => {
-  if (isDevelopment && !process.env.IS_TEST) {
-    // try {
-    //   const extensions = await session.defaultSession.getAllExtensions()
-    //   if (!extensions.includes("Vue.js devtools")) {
-    //     const appData = app.getPath("appData")
-    //     const res = await session.defaultSession.loadExtension(
-    //       // 根据本机实际情况修改
-    //       path.resolve(appData, 'Google/Chrome/Default/Extensions/nhdogjmejiglipccpnnnanhbledajbpd/5.3.4_0')
-    //     )
-    //     console.log(`${res.name}安装成功`)
-    //   }
-    // } catch (e) {
-    //   console.error('Vue Devtools failed to install:', e.toString())
-    // }
-  }
   global.execPath = process.execPath
   global.argv = process.argv
   await createWindow()
