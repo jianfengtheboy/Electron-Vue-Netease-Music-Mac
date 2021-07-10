@@ -3,19 +3,19 @@
  * @LastEditors: Sun
  * @Email: jianfengtheboy@163.com
  * @Date: 2021-07-08 17:24:40
- * @LastEditTime: 2021-07-08 18:01:02
+ * @LastEditTime: 2021-07-10 21:14:30
 -->
 <template>
   <div class="top-bar">
     <div class="top-bar-logo">
-      <img src="../../assets/images/logo.svg" alt="网易云音乐">
+      <img v-if="platform !== 'darwin'" src="../../assets/images/logo.svg" alt="网易云音乐">
     </div>
     <div class="top-bar-main">
       <div class="top-bar-control">
-        <!-- <controls /> -->
+        <controls />
       </div>
       <div class="top-bar-search">
-        <!-- <search-box /> -->
+        <search-box />
       </div>
       <div class="top-bar-menu">
         <div class="top-bar-menu-user">
@@ -23,14 +23,14 @@
             <!-- <user-info /> -->
           </div>
           <div class="item">
-            <!-- <theme-setting /> -->
+            <theme-setting />
           </div>
           <div class="item" @click="$router.push({ path: '/setting' })">
             <a-icon type="setting" class="icon" />
           </div>
           <div class="item" @click="logout" v-if="userId">退出</div>
         </div>
-
+        <!-- <frame-actions /> -->
       </div>
     </div>
   </div>
@@ -38,24 +38,88 @@
 
 <script>
 import { mapGetters, mapState } from 'vuex'
+import components from './components'
+import eventBus from '@/utils/eventBus'
 
 export default {
   name: 'basicHeader',
-  components: {
-
-  },
+  components,
   computed: {
-    ...mapGetters('User', ['userId'])
+    ...mapState('App', ['platform', 'primaryColor']),
+    ...mapGetters('User', ['userId']),
+    ...mapGetters('play', [
+      'current_song',
+      'history_play_list',
+      'current_play_list',
+      'current_song_index'
+    ]),
+    ...mapState(['User'])
   },
   methods: {
+    showLogin() {
+      this.$store.commit('User/SET_SHOW_LOGIN', true)
+    },
     logout() {
-      
+      this.$store.dispatch('User/logout').then(() => {
+        this.$message.success('退出成功')
+        if (this.$route.name === 'home') {
+          eventBus.$emit('refresh')
+        } else {
+          this.$router.push({ path: '/home' })
+        }
+      })
     }
   }
 }
 </script>
 
 <style lang='less' scoped>
+.search-wrapper {
+  dl,
+  dd {
+    margin-bottom: 0;
+  }
+  .search-content {
+    display: flex;
+    margin: -12px -16px;
+    dl {
+      width: 50%;
+      font-size: 13px;
+      &:not(:last-child) {
+        border-right: 1px solid #eee;
+      }
+    }
+    dt {
+      padding: 7px 15px;
+      border-bottom: 1px solid #eee;
+      color: #999;
+    }
+    dd {
+      padding: 0 15px;
+      line-height: 28px;
+      color: #111;
+      &:hover {
+        background: #eee;
+      }
+    }
+  }
+  .search-result {
+    margin: -12px -16px;
+    dt {
+      padding: 7px 15px;
+      background: #f3f5f9;
+    }
+    dd {
+      padding: 0 5px 0 30px;
+      line-height: 28px;
+      color: #111;
+      &:hover {
+        background: #eee;
+      }
+    }
+  }
+}
+
 .top-bar {
   display: flex;
   height: 100%;
@@ -66,11 +130,9 @@ export default {
     align-items: center;
     width: 200px;
     flex: 0 0 200px;
-    justify-content: flex-end;
-    padding-right: 10px;
-
+    padding-left: 15px;
     img {
-      width: 100px;
+      width: 140px;
     }
   }
 
@@ -89,10 +151,6 @@ export default {
     .top-bar-control {
       margin-right: 5px;
       -webkit-app-region: no-drag;
-      /deep/ .ant-btn {
-        height: 24px;
-        line-height: 22px;
-      }
     }
 
     .top-bar-menu {
@@ -138,5 +196,64 @@ export default {
       }
     }
   }
+}
+
+.top-bar-menu {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  height: 100%;
+  .top-bar-menu-user {
+    display: flex;
+    -webkit-app-region: no-drag;
+    .item {
+      display: inline-flex;
+      align-items: center;
+      padding: 0 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+      &:hover {
+        color: rgba(255, 255, 255, 1);
+      }
+      .ant-badge-count {
+        height: 16px;
+        line-height: 16px;
+        min-width: 16px;
+        padding: 0 5px;
+        background: #fff;
+        color: @primary-color;
+        box-shadow: none;
+        border-radius: 8px;
+      }
+      .avatar {
+        margin-right: 8px;
+        border-radius: 50%;
+      }
+    }
+  }
+}
+
+.header-user {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s;
+  .header-user-info {
+    display: flex;
+    align-items: center;
+  }
+  span {
+    font-size: 13px;
+    letter-spacing: 2px;
+  }
+}
+
+.user-info-name {
+  display: inline-block;
+  max-width: 80px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  vertical-align: middle;
 }
 </style>
